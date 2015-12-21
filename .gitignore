@@ -1,0 +1,8 @@
+.DS_Store
+*.swp
+.idea
+*.pid
+contrib/compiler/
+out/*
+src/deps.js
+*.swo
