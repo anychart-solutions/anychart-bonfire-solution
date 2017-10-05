@@ -23,7 +23,7 @@ AnyChart Bonfire solution includes two parts:
 You can use, edit, modify it, use it with other Javascript libraries without any 
 restrictions. It is released under [Apache 2.0 License](LICENSE).
 - AnyChart JavaScript library. It is released under Commercial license.
- You can test this plugin with the trial version of AnyChart. 
+ You can test this solution with the trial version of AnyChart. 
  Our trial version is not limited by time and doesn't contain any feature limitations. 
  Check details [here](https://www.anychart.com/buy/) 
 
