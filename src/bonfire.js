@@ -19,7 +19,7 @@ var DEFAULT_FRAME_INTERVAL = 16;
 var allowFire = true;
 var allowSmoke = true;
 
-var g = anychart.graphics;
+var g = acgraph;
 
 function lockFire() {
   if (allowFire) {
@@ -38,117 +38,6 @@ function lockSmoke() {
       allowSmoke = true;
     }, SMOKE_PERIOD)
   }
-}
-
-
-anychart.onDocumentReady(function() {
-  window.requestAnimationFrame = window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      window.mozRequestAnimationFrame ||
-      window.oRequestAnimationFrame ||
-      window.msRequestAnimationFrame ||
-      function(callback) {
-        console.log('Warn: old browser');
-        setTimeout(callback, DEFAULT_FRAME_INTERVAL);
-      };
-
-  stage = g.create('container');
-  smokeLayer = stage.layer();
-  fireLayer = stage.layer();
-  fireplaceLayer = stage.layer();
-  stoneHighlightPath = fireplaceLayer.path();
-  stones = fireplaceLayer.path();
-
-  stage.addEventListener('stageresize', decorateFireplace, false, this);
-
-  stage.suspend();
-  decorateFireplace();
-  draw();
-  stage.resume();
-});
-
-function draw() {
-  if (fires.length < NUMBER_OF_FIRES) addFire();
-  if (smokes.length < NUMBER_OF_SMOKES) addSmoke();
-  runStage();
-  window.requestAnimationFrame(draw);
-}
-
-
-function decorateFireplace() {
-  var bounds = stage.getBounds();
-
-  FIRE_RECT_SIDE = Math.round(bounds.height / 20);
-  SMOKE_RECT_SIDE = Math.round(0.8 * FIRE_RECT_SIDE);
-
-  var centerX = bounds.left + bounds.width / 2;
-  var bottom = bounds.top + bounds.height;
-  var top = bounds.top + Math.round(bounds.height / 1.7);
-  stones.clear();
-  stoneHighlightPath.clear();
-
-  stones.fill('#000');
-
-  var w = FIRE_RECT_SIDE * 5;
-  var count = 20;
-  var step = 2 * w / count;
-  var left = centerX + w;
-  stones.moveTo(centerX - w, bottom)
-      .lineTo(left, bottom)
-      .lineTo(left, top);
-  stoneHighlightPath.moveTo(left, top);
-  var mult = 1;
-
-  for (var i = 0; i < count; i++) {
-    left -= step;
-    var t = top + (mult * 2);
-    mult = -mult;
-    stones.lineTo(left, t);
-    stoneHighlightPath.lineTo(left, t);
-  }
-
-  stones.close();
-}
-
-function addFire() {
-  if (allowFire) {
-    var firePath = fireLayer.path().stroke(null);
-    var fire = new GraphicsWrapper(firePath, fires, FIRE_RECT_SIDE, 255, 255, 0, fireRedConverter, fireGreenConverter,
-        fireBlueConverter, getFireStartPoint, fireDeltaXGetter, fireDeltaYGetter, animateFire, animateFireOpacity,
-        fireScaleGetter);
-    fire.isFire = true;
-    fires.push(fire);
-    lockFire();
-  }
-}
-
-function addSmoke() {
-  if (allowSmoke) {
-    var smokePath = smokeLayer.path().stroke(null);
-    var smoke = new GraphicsWrapper(smokePath, smokes, SMOKE_RECT_SIDE, 80, 80, 80, smokeRedConverter, smokeGreenConverter,
-        smokeBlueConverter, getSmokeStartPoint, smokeDeltaXGetter, smokeDeltaYGetter, animateSmoke, animateSmokeOpacity,
-        smokeScaleGetter);
-    smoke.isFire = false;
-    smokes.push(smoke);
-    lockSmoke();
-  }
-}
-
-
-function runStage() {
-  stage.suspend();
-  for (var i = 0; i < fires.length; i++) {
-    var fireWrapper = fires[i];
-    fireWrapper.stepPosition(DEFAULT_FRAME_INTERVAL);
-    fireWrapper.drawCurrentState();
-  }
-
-  for (i = 0; i < smokes.length; i++) {
-    var smokeWrapper = smokes[i];
-    smokeWrapper.stepPosition(DEFAULT_FRAME_INTERVAL);
-    smokeWrapper.drawCurrentState();
-  }
-  stage.resume();
 }
 
 
@@ -240,15 +129,126 @@ GraphicsWrapper.prototype.drawCurrentState = function() {
 };
 
 
+window.requestAnimationFrame = window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    function(callback) {
+      console.log('Warn: old browser');
+      setTimeout(callback, DEFAULT_FRAME_INTERVAL);
+    };
+
+stage = g.create('container');
+smokeLayer = stage.layer();
+fireLayer = stage.layer();
+fireplaceLayer = stage.layer();
+stoneHighlightPath = fireplaceLayer.path();
+stones = fireplaceLayer.path();
+
+stage.listen('stageresize', decorateFireplace, false, this);
+
+stage.suspend();
+decorateFireplace();
+draw();
+stage.resume();
+
+function draw() {
+  if (fires.length < NUMBER_OF_FIRES) addFire();
+  if (smokes.length < NUMBER_OF_SMOKES) addSmoke();
+  runStage();
+  window.requestAnimationFrame(draw);
+}
+
+
+function decorateFireplace() {
+  var bounds = stage.getBounds();
+
+  FIRE_RECT_SIDE = Math.round(bounds.height / 20);
+  SMOKE_RECT_SIDE = Math.round(0.8 * FIRE_RECT_SIDE);
+
+  var centerX = bounds.left + bounds.width / 2;
+  var bottom = bounds.top + bounds.height;
+  var top = bounds.top + Math.round(bounds.height / 1.7);
+  stones.clear();
+  stoneHighlightPath.clear();
+
+  stones.fill('#000');
+
+  var w = FIRE_RECT_SIDE * 5;
+  var count = 20;
+  var step = 2 * w / count;
+  var left = centerX + w;
+  stones.moveTo(centerX - w, bottom)
+      .lineTo(left, bottom)
+      .lineTo(left, top);
+  stoneHighlightPath.moveTo(left, top);
+  var mult = 1;
+
+  for (var i = 0; i < count; i++) {
+    left -= step;
+    var t = top + (mult * 2);
+    mult = -mult;
+    stones.lineTo(left, t);
+    stoneHighlightPath.lineTo(left, t);
+  }
+
+  stones.close();
+}
+
+function addFire() {
+  if (allowFire) {
+    var firePath = fireLayer.path().stroke(null);
+    var fire = new GraphicsWrapper(firePath, fires, FIRE_RECT_SIDE, 255, 255, 0, fireRedConverter, fireGreenConverter,
+        fireBlueConverter, getFireStartPoint, fireDeltaXGetter, fireDeltaYGetter, animateFire, animateFireOpacity,
+        fireScaleGetter);
+    fire.isFire = true;
+    fires.push(fire);
+    lockFire();
+  }
+}
+
+function addSmoke() {
+  if (allowSmoke) {
+    var smokePath = smokeLayer.path().stroke(null);
+    var smoke = new GraphicsWrapper(smokePath, smokes, SMOKE_RECT_SIDE, 80, 80, 80, smokeRedConverter, smokeGreenConverter,
+        smokeBlueConverter, getSmokeStartPoint, smokeDeltaXGetter, smokeDeltaYGetter, animateSmoke, animateSmokeOpacity,
+        smokeScaleGetter);
+    smoke.isFire = false;
+    smokes.push(smoke);
+    lockSmoke();
+  }
+}
+
+
+function runStage() {
+  stage.suspend();
+  for (var i = 0; i < fires.length; i++) {
+    var fireWrapper = fires[i];
+    fireWrapper.stepPosition(DEFAULT_FRAME_INTERVAL);
+    fireWrapper.drawCurrentState();
+  }
+
+  for (i = 0; i < smokes.length; i++) {
+    var smokeWrapper = smokes[i];
+    smokeWrapper.stepPosition(DEFAULT_FRAME_INTERVAL);
+    smokeWrapper.drawCurrentState();
+  }
+  stage.resume();
+}
+
+
 function animateFire(timeRatio) {
   return Math.pow(timeRatio, 2);
   //return Math.pow(timeRatio, 5);
   //return 1 - Math.sin(Math.acos(timeRatio));
 }
 
+
 function animateSmoke(timeRatio) {
   return timeRatio;
 }
+
 
 function animateFireOpacity(timeRatio) {
   //return Math.pow(timeRatio, 2);
@@ -256,29 +256,36 @@ function animateFireOpacity(timeRatio) {
   return 1 - Math.sin(Math.acos(timeRatio));
 }
 
+
 function animateSmokeOpacity(timeRatio) {
   return Math.pow(timeRatio, 2);
 }
+
 
 function fireRedConverter(red, position) {
   return red;
 }
 
+
 function smokeRedConverter(red, position) {
   return red * (1 - .5 * position);
 }
+
 
 function fireGreenConverter(green, position) {
   return 55 + 200 * (1 - position);
 }
 
+
 function smokeGreenConverter(green, position) {
   return green * (1 - .5 * position);
 }
 
+
 function fireBlueConverter(blue, position) {
   return blue;
 }
+
 
 function smokeBlueConverter(blue, position) {
   return blue * (1 - .5 * position);
@@ -289,9 +296,11 @@ function rgbToHex(r, g, b) {
   return "#" + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
 }
 
+
 function plusMinusRandom(val) {
   return Math.round(val - 2 * val * Math.random());
 }
+
 
 function reduceZIndex(scope, source) {
   for (var i = 0; i < scope.length; i++) {
@@ -304,6 +313,7 @@ function reduceZIndex(scope, source) {
   }
 }
 
+
 function getFireStartPoint() {
   var bounds = stage.getBounds();
   var x = FIRE_RECT_SIDE * 2;
@@ -312,6 +322,7 @@ function getFireStartPoint() {
   var top = bounds.top + Math.round(bounds.height / 1.7 + y * Math.random());
   return new g.math.Coordinate(left, top);
 }
+
 
 function getSmokeStartPoint() {
   var bounds = stage.getBounds();
@@ -322,25 +333,31 @@ function getSmokeStartPoint() {
   return new g.math.Coordinate(left, top);
 }
 
+
 function fireDeltaXGetter() {
   return plusMinusRandom(FIRE_RECT_SIDE * 2);
 }
+
 
 function smokeDeltaXGetter() {
   return plusMinusRandom(SMOKE_RECT_SIDE * 4);
 }
 
+
 function fireDeltaYGetter() {
   return -5 * FIRE_RECT_SIDE;
 }
+
 
 function smokeDeltaYGetter() {
   return fireDeltaYGetter();
 }
 
+
 function fireScaleGetter(position) {
   return .3 + .7 * (1 - position);
 }
+
 
 function smokeScaleGetter(position) {
   return 1 + position;
